@@ -1,0 +1,78 @@
+pipeline{
+	agent any
+	environment {
+        PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/jdk1.8.0_301/bin"
+    }
+	parameters {
+        string(name: 'TAG_NAME', defaultValue: '', description: '标签(vx.x.x用于发布正式版)')
+    }
+	stages{
+		stage("prepare demo project") {
+			steps {
+				script {
+					println "prepare demo project"
+				}
+				sh '''
+                cd demo-project
+                rm -rf target
+                '''
+			}
+		}
+
+		stage("git checkout") {
+			steps {
+				git branch: 'main', credentialsId: '77e1a4a7-57ab-4655-b293-6d36cb760cfc', url: 'https://gitee.com/fighting-one-piece/demo-repository.git'
+			}
+		}
+
+		stage("unit test") {
+		    steps {
+		        echo 'unit test'
+		        sh '''
+		        cd demo-project
+		        mvn clean -X -U test
+		        '''
+		    }
+		}
+
+		stage("build") {
+		    steps {
+		        echo 'build'
+		        sh '''
+		        cd demo-project
+		        mvn clean -X -U package -Dmaven.test.skip=true
+		        '''
+		    }
+		}
+
+		stage("deploy to test") {
+		    when {
+                // branch 'master'
+                not {
+                    expression {
+                        return params.TAG_NAME ==~ /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+                    }
+                }
+            }
+		    steps {
+		        echo 'deploy to test'
+		        sh '''
+		        cd demo-project
+		        java -jar -Dserver.port=8001 -Dspring.profiles.active=test target/demo-project-1.0-SNAPSHOT.jar &
+		        '''
+		    }
+		}
+
+		stage("deploy to prod") {
+		    when {
+                expression {
+                    return params.TAG_NAME =~ /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+                }
+            }
+		    steps {
+		        echo 'deploy to prod'
+		    }
+		}
+
+	}
+}
