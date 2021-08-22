@@ -1,5 +1,9 @@
 pipeline{
-	agent any
+	agent {
+		node {
+			label 'base'
+		}
+	}
 	environment {
         PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/jdk1.8.0_301/bin"
         DOCKER_HUB_REGISTRY = '192.168.2.128'
