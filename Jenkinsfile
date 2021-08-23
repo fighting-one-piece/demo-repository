@@ -39,26 +39,30 @@ pipeline{
 
 		stage("unit test") {
 		    steps {
-		        echo 'unit test'
-		        sh '''
-		        cd demo-project
-		        mvn clean -X -U test
-		        '''
+		    	container('maven') {
+			        echo 'unit test'
+			        sh '''
+			        cd demo-project
+			        mvn clean -X -U test
+			        '''
+			    }
 		    }
 		}
 
 		stage("build & push") {
 		    steps {
-		        echo 'build'
-		        sh '''
-		        cd demo-project
-		        mvn clean -X -U package -Dmaven.test.skip=true
-		        docker build -f Dockerfile -t $DOCKER_HUB_REGISTRY/$DOCKER_HUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER .
-		        '''
-		        withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_CREDENTIAL_ID", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                    sh 'echo "$DOCKER_PASSWORD" | docker login $DOCKER_HUB_REGISTRY -u "$DOCKER_USERNAME" --password-stdin'
-                    sh 'docker push $DOCKER_HUB_REGISTRY/$DOCKER_HUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER'
-                }
+		        container('maven') {
+			        echo 'build'
+			        sh '''
+			        cd demo-project
+			        mvn clean -X -U package -Dmaven.test.skip=true
+			        docker build -f Dockerfile -t $DOCKER_HUB_REGISTRY/$DOCKER_HUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER .
+			        '''
+			        withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_CREDENTIAL_ID", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+	                    sh 'echo "$DOCKER_PASSWORD" | docker login $DOCKER_HUB_REGISTRY -u "$DOCKER_USERNAME" --password-stdin'
+	                    sh 'docker push $DOCKER_HUB_REGISTRY/$DOCKER_HUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER'
+	                }
+	            }
 		    }
 		}
 
