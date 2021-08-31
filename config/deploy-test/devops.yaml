@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-project-v1
+  namespace: demo-project-test
+  labels:
+    app: demo-project
+    app.kubernetes.io/name: demo-service
+    app.kubernetes.io/version: v1
+    version: v1
+  annotations:
+    kubesphere.io/description: "DEMO服务"
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: demo-project
+      app.kubernetes.io/name: demo-service
+      app.kubernetes.io/version: v1
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: demo-project
+        app.kubernetes.io/name: demo-service
+        app.kubernetes.io/version: v1
+        version: v1
+      annotations:
+        kubesphere.io/containerSecrets: '{"demo-project":"dockerhubsecret"}'
+    spec:
+      containers:
+        - image: $DOCKER_HUB_REGISTRY/$DOCKER_HUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER
+          imagePullPolicy: Always
+          name: demo-project
+          ports:
+            - containerPort: 8001
+              name: http-8001
+              protocol: TCP
+            - containerPort: 8090
+              name: tcp-8090
+              protocol: TCP
+          env:
+            - name: SERVER_PORT
+              value: '8001'
+          resources:
+            limits:
+              cpu: '1.5'
+              memory: 1024Mi
+            requests:
+              cpu: 200m
+              memory: 300Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8001
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8001
+              scheme: HTTP
+            initialDelaySeconds: 20
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: dockerhubsecret

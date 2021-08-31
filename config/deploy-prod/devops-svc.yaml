@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: demo-project
+    app.kubernetes.io/name: demo-service
+    app.kubernetes.io/version: v1
+  name: demo-project
+  namespace: demo-project-prod
+  annotations:
+    kubesphere.io/description: DEMO服务
+    kubesphere.io/serviceType: statelessservice
+    servicemesh.kubesphere.io/enabled: 'true'
+spec:
+  ports:
+    - name: http-8001
+      port: 8001
+      protocol: TCP
+      targetPort: 8001
+    - name: tcp-8090
+      port: 8090
+      protocol: TCP
+      targetPort: 8090
+  selector:
+    app: demo-project
+    app.kubernetes.io/name: demo-service
+    app.kubernetes.io/version: v1
+  sessionAffinity: None
+  type: ClusterIP

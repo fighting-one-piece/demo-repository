@@ -13,6 +13,6 @@ ENV JAVA_PARAMS ""
 ENV DEF_JAVA_OPTS "-Djava.security.egd=file:/dev/./urandom -Duser.timezone=Asia/Shanghai -Dfile.encoding=utf-8"
 ENV APP_JAR_PATH=app.jar
 
-ADD target/*.jar ./${APP_JAR_PATH}
+ADD demo-project/target/*.jar ./${APP_JAR_PATH}
 
 ENTRYPOINT ["/sbin/tini","--","sh","-c","java ${JAVA_OPTS} ${DEF_JAVA_OPTS} -jar ${APP_JAR_PATH} ${JAVA_PARAMS} --spring.profiles.active=${YZ_MODE} --server.port=8001"]
